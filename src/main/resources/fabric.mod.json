@@ -1,0 +1,27 @@
+{
+	"schemaVersion": 1,
+	"id": "instant_leaf_decay",
+	"version": "${version}",
+	"name": "Inventory Trash Can",
+	"description": "Leaves decay instantly when trees are cut!",
+	"authors": [
+		"Musa"
+	],
+	"license": "CC0-1.0",
+	"icon": "assets/instant_leaf_decay/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"com.example.ExampleMod"
+		]
+	},
+	"mixins": [
+		"instant_leaf_decay.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.18.5",
+		"minecraft": "~26.1",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}
