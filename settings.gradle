@@ -1,4 +1,3 @@
-rootProject.name = 'inventory-trash-can'
 pluginManagement {
 	repositories {
 		maven {
@@ -9,3 +8,6 @@ pluginManagement {
 		gradlePluginPortal()
 	}
 }
+
+// Proje ismi pluginManagement bloğundan SONRA gelmelidir
+rootProject.name = 'inventory-trash-can'
