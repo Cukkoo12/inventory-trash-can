@@ -20,8 +20,8 @@ public abstract class TrashSlotMixin extends Screen {
 
     // Resimlerin (Sprites) sisteme tanıtılması
     private static final WidgetSprites COP_SPRITES = new WidgetSprites(
-            Identifier.fromNamespaceAndPath("akilli_cop", "trash_can"),         // Açık Kapak (Normal)
-            Identifier.fromNamespaceAndPath("akilli_cop", "trash_can_hovered")  // Kapalı Kapak (Fare Üstünde)
+            Identifier.fromNamespaceAndPath("inventory_trash_can", "trash_can"),
+            Identifier.fromNamespaceAndPath("inventory_trash_can", "trash_can_hovered")  // Kapalı Kapak (Fare Üstünde)
     );
 
     protected TrashSlotMixin(Component title) {

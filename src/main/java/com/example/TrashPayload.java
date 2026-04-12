@@ -7,9 +7,7 @@ import net.minecraft.resources.Identifier;
 
 public record TrashPayload() implements CustomPacketPayload {
 
-    // Kuryenin kimliği
-    public static final CustomPacketPayload.Type<TrashPayload> TYPE = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath("akilli_cop", "esya_sil"));
-
+    public static final CustomPacketPayload.Type<TrashPayload> TYPE = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath("inventory_trash_can", "esya_sil"));
     // Kuryenin paketlenme şekli (Boş bir tetikleyici paket olduğu için unit kullanıyoruz)
     public static final StreamCodec<ByteBuf, TrashPayload> CODEC = StreamCodec.unit(new TrashPayload());
 

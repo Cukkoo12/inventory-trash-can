@@ -8,7 +8,7 @@
 		"Musa"
 	],
 	"license": "MIT",
-	"icon": "assets/akilli_cop/icon.png",
+	"icon": "assets/inventory_trash_can/icon.png",
 	"environment": "*",
 	"entrypoints": {
 		"main": [
