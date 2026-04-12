@@ -1,3 +1,4 @@
+rootProject.name = 'inventory-trash-can'
 pluginManagement {
 	repositories {
 		maven {
