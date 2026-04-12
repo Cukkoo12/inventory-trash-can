@@ -16,7 +16,7 @@
 		]
 	},
 	"mixins": [
-		"instant_leaf_decay.mixins.json"
+		"inventory_trash_can.mixins.json"
 	],
 	"depends": {
 		"fabricloader": ">=0.18.5",
