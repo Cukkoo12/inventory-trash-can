@@ -1,0 +1,14 @@
+modLoader = "javafml"
+loaderVersion = "[4,)"
+
+[[mods]]
+modId = "inventory_trash_can"
+version = "${version}"
+displayName = "Inventory Trash Can"
+description = "A mod that allows for the quick and practical disposal of unnecessary items directly from the Minecraft inventory."
+authors = ["Cukkoo"]
+license = "MIT"
+icon = "assets/inventory_trash_can/icon.png"
+
+[[mixins]]
+config = "inventory_trash_can.mixins.json"

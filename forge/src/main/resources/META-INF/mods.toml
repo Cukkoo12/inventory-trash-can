@@ -1,0 +1,28 @@
+modLoader="javafml"
+loaderVersion="[64,)"
+license="MIT"
+
+[[mods]]
+modId="inventory_trash_can"
+version="${version}"
+displayName="Inventory Trash Can"
+logoFile="assets/inventory_trash_can/icon.png"
+description="A mod that allows for the quick and practical disposal of unnecessary items directly from the Minecraft inventory."
+authors="Cukkoo"
+
+[[mixins]]
+config="inventory_trash_can.mixins.json"
+
+[[dependencies.inventory_trash_can]]
+modId="forge"
+mandatory=true
+versionRange="[64,)"
+ordering="NONE"
+side="CLIENT"
+
+[[dependencies.inventory_trash_can]]
+modId="minecraft"
+mandatory=true
+versionRange="[26.1.2,)"
+ordering="NONE"
+side="CLIENT"

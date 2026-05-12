@@ -6,3 +6,5 @@ out/
 *.iml
 *.iws
 *.ipr
+CLAUDE.md
+CLAUDE-*.md
