@@ -6,19 +6,19 @@ import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.api.distmarker.Dist;
-import net.neoforged.neoforge.event.TickEvent;
-import net.neoforged.neoforge.eventbus.api.SubscribeEvent;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.loading.FMLPaths;
-import net.neoforged.neoforge.network.ChannelBuilder;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import org.lwjgl.glfw.GLFW;
 
 @Mod(InventoryTrashCanMod.MOD_ID)
@@ -28,51 +28,45 @@ public class InventoryTrashCanMod {
     public static ModConfig CONFIG;
     public static ItemStack lastTrashedItem = ItemStack.EMPTY;
 
-    private static boolean deleteWasDown = false;
-
-    public InventoryTrashCanMod() {
+    public InventoryTrashCanMod(IEventBus modEventBus) {
         CONFIG = ModConfig.load(FMLPaths.CONFIGDIR.get());
 
-        ChannelBuilder.named(ResourceLocation.fromNamespaceAndPath(MOD_ID, "trash"))
-                .networkProtocolVersion(1)
-                .payloadChannel()
-                .play()
-                .serverbound(flow -> flow.add(
-                        TrashActionPayload.TYPE,
-                        TrashActionPayload.CODEC,
-                        (payload, ctx) -> {
-                            ctx.enqueueWork(() -> {
-                                var player = ctx.getSender();
-                                if (player == null || player.containerMenu == null) return;
+        modEventBus.addListener(RegisterPayloadHandlersEvent.class, event -> {
+            event.registrar("1")
+                    .playToServer(
+                            TrashActionPayload.TYPE,
+                            TrashActionPayload.CODEC,
+                            (payload, ctx) -> {
+                                ctx.enqueueWork(() -> {
+                                    var player = ctx.player();
+                                    if (player == null || player.containerMenu == null) return;
 
-                                switch (payload.action()) {
-                                    case 0 -> player.containerMenu.setCarried(ItemStack.EMPTY);
-                                    case 1 -> {
-                                        player.containerMenu.setCarried(ItemStack.EMPTY);
-                                        Item target = BuiltInRegistries.ITEM.byId(payload.rawItemId());
-                                        for (Slot slot : player.containerMenu.slots) {
-                                            if (slot.container instanceof Inventory
-                                                    && slot.getItem().getItem() == target) {
-                                                slot.set(ItemStack.EMPTY);
+                                    switch (payload.action()) {
+                                        case 0 -> player.containerMenu.setCarried(ItemStack.EMPTY);
+                                        case 1 -> {
+                                            player.containerMenu.setCarried(ItemStack.EMPTY);
+                                            Item target = BuiltInRegistries.ITEM.byId(payload.rawItemId());
+                                            for (Slot slot : player.containerMenu.slots) {
+                                                if (slot.container instanceof Inventory
+                                                        && slot.getItem().getItem() == target) {
+                                                    slot.set(ItemStack.EMPTY);
+                                                }
                                             }
                                         }
+                                        case 2 -> player.containerMenu.setCarried(payload.restoreStack());
                                     }
-                                    case 2 -> player.containerMenu.setCarried(payload.restoreStack());
-                                }
-                            });
-                            ctx.setPacketHandled(true);
-                        }
-                ));
+                                });
+                            }
+                    );
+        });
     }
 
-    public static void sendPacket(TrashActionPayload payload) {
-        PacketDistributor.SERVER.noArg().send(new ServerboundCustomPayloadPacket(payload));
-    }
+    @EventBusSubscriber(modid = MOD_ID, value = Dist.CLIENT)
+    public static class ClientEvents {
+        private static boolean deleteWasDown = false;
 
-    @Mod.EventBusSubscriber(modid = MOD_ID, bus = Mod.EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
-    public static class ForgeEvents {
         @SubscribeEvent
-        public static void onClientTick(TickEvent.ClientTickEvent.Post event) {
+        public static void onClientTick(ClientTickEvent.Post event) {
             Minecraft client = Minecraft.getInstance();
             if (client.player == null) return;
 
@@ -91,7 +85,7 @@ public class InventoryTrashCanMod {
                 if (carried.isEmpty()) return;
 
                 int rawId = BuiltInRegistries.ITEM.getId(carried.getItem());
-                sendPacket(new TrashActionPayload(1, rawId, ItemStack.EMPTY));
+                PacketDistributor.sendToServer(new TrashActionPayload(1, rawId, ItemStack.EMPTY));
 
                 InventoryScreen screen = (InventoryScreen) client.screen;
                 int totalCount = carried.getCount();
@@ -111,11 +105,11 @@ public class InventoryTrashCanMod {
                 if (!carried.isEmpty()) {
                     lastTrashedItem = carried.copy();
                     client.player.containerMenu.setCarried(ItemStack.EMPTY);
-                    sendPacket(new TrashActionPayload(0, 0, ItemStack.EMPTY));
+                    PacketDistributor.sendToServer(new TrashActionPayload(0, 0, ItemStack.EMPTY));
                 } else if (!lastTrashedItem.isEmpty()) {
                     ItemStack restored = lastTrashedItem.copy();
                     client.player.containerMenu.setCarried(restored);
-                    sendPacket(new TrashActionPayload(2, 0, restored));
+                    PacketDistributor.sendToServer(new TrashActionPayload(2, 0, restored));
                     lastTrashedItem = ItemStack.EMPTY;
                 }
             }
