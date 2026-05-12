@@ -49,9 +49,18 @@ A Minecraft Fabric mod that adds a trash can button to the inventory screen for 
 ## Installation
 
 1. Install Fabric Loader for Minecraft 26.1.
-2. Download the latest `.jar` from [Releases](https://github.com/Cukkoo12/Akilli_Cop/releases).
+2. Download the latest `.jar` from [Releases](https://github.com/Cukkoo12/inventory-trash-can/releases).
 3. Place the `.jar` in your `mods` folder.
 4. Launch the game.
+
+## License
+
+## Screenshots
+
+![Trash button in inventory](images/trash-button.png)
+![Shift+Hover highlight](images/highlight.png)
+![Bulk delete](images/bulk-delete.png)
+![Count display](images/count-display.png)
 
 ## License
 
