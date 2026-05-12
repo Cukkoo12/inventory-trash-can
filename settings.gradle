@@ -1,13 +1,11 @@
 pluginManagement {
-	repositories {
-		maven {
-			name = 'Fabric'
-			url = 'https://maven.fabricmc.net/'
-		}
-		mavenCentral()
-		gradlePluginPortal()
-	}
+    repositories {
+        maven {
+            name = 'NeoForge'
+            url = 'https://maven.neoforged.net/releases'
+        }
+        mavenCentral()
+        gradlePluginPortal()
+    }
 }
-
-// Proje ismi pluginManagement bloğundan SONRA gelmelidir
-rootProject.name = 'inventory-trash-can'
+rootProject.name = "inventory-trash-can-neoforge-1.21.4"

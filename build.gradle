@@ -1,42 +1,45 @@
 plugins {
-	id 'net.fabricmc.fabric-loom' version '1.15-SNAPSHOT'
-	id 'maven-publish'
+    id 'net.neoforged.moddev' version '2.0.141'
+    id 'maven-publish'
 }
 
 version = project.mod_version
 group = project.maven_group
 
 base {
-	archivesName = project.archives_base_name
+    archivesName = project.archives_base_name
 }
 
-repositories {
-	mavenCentral()
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+neoForge {
+    version = project.neo_version
+
+    runs {
+        client {}
+        server {}
+    }
+
+    mods {
+        inventorytrashcan {
+            sourceSet sourceSets.main
+        }
+    }
 }
 
 dependencies {
-	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	// mappings YOK
-	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
-	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+    compileOnly 'org.spongepowered:mixin:0.8.5'
 }
 
 processResources {
-	inputs.property "version", project.version
-	filteringCharset = "UTF-8"
-	filesMatching("fabric.mod.json") {
-		expand "version": project.version
-	}
+    inputs.property "version", project.version
+    filteringCharset = "UTF-8"
+    filesMatching("META-INF/neoforge.mods.toml") {
+        expand "version": project.version
+    }
 }
 
 java {
-	sourceCompatibility = JavaVersion.VERSION_25
-	targetCompatibility = JavaVersion.VERSION_25
-	withSourcesJar()
-}
-
-jar {
-	from("LICENSE") {
-		rename { "${it}_${project.archives_base_name}" }
-	}
+    toolchain.languageVersion = JavaLanguageVersion.of(21)
+    withSourcesJar()
 }

@@ -1,13 +1,8 @@
 {
-	"required": true,
-	"minVersion": "0.8",
-	"package": "com.cukkoo.inventorytrashcan.mixin",
-	"compatibilityLevel": "JAVA_25",
-	"client": [
-		"AbstractContainerScreenAccessor",
-		"InventoryScreenMixin"
-	],
-	"injectors": {
-		"defaultRequire": 1
-	}
+    "required": true,
+    "minVersion": "0.8",
+    "package": "com.cukkoo.inventorytrashcan.mixin",
+    "compatibilityLevel": "JAVA_21",
+    "client": ["AbstractContainerScreenAccessor", "InventoryScreenMixin"],
+    "injectors": { "defaultRequire": 1 }
 }

@@ -3,17 +3,16 @@ package com.cukkoo.inventorytrashcan.mixin;
 import com.cukkoo.inventorytrashcan.InventoryTrashCanMod;
 import com.cukkoo.inventorytrashcan.network.TrashActionPayload;
 import com.mojang.blaze3d.platform.InputConstants;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.ImageButton;
 import net.minecraft.client.gui.components.WidgetSprites;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
@@ -29,8 +28,8 @@ public abstract class InventoryScreenMixin extends Screen {
 
     @Unique
     private static final WidgetSprites TRASH_SPRITES = new WidgetSprites(
-            Identifier.fromNamespaceAndPath("inventory_trash_can", "trash_can"),
-            Identifier.fromNamespaceAndPath("inventory_trash_can", "trash_can_hovered")
+            ResourceLocation.fromNamespaceAndPath("inventory_trash_can", "trash_can"),
+            ResourceLocation.fromNamespaceAndPath("inventory_trash_can", "trash_can_hovered")
     );
 
     @Unique
@@ -49,8 +48,8 @@ public abstract class InventoryScreenMixin extends Screen {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player == null || mc.player.containerMenu == null) return;
 
-            boolean shiftDown = InputConstants.isKeyDown(mc.getWindow(), GLFW.GLFW_KEY_LEFT_SHIFT)
-                    || InputConstants.isKeyDown(mc.getWindow(), GLFW.GLFW_KEY_RIGHT_SHIFT);
+            boolean shiftDown = InputConstants.isKeyDown(mc.getWindow().getWindow(), GLFW.GLFW_KEY_LEFT_SHIFT)
+                    || InputConstants.isKeyDown(mc.getWindow().getWindow(), GLFW.GLFW_KEY_RIGHT_SHIFT);
 
             ItemStack carried = mc.player.containerMenu.getCarried();
 
@@ -59,7 +58,7 @@ public abstract class InventoryScreenMixin extends Screen {
                 if (trashRef.isEmpty()) return;
 
                 int rawId = BuiltInRegistries.ITEM.getId(trashRef.getItem());
-                ClientPlayNetworking.send(new TrashActionPayload(1, rawId, ItemStack.EMPTY));
+                InventoryTrashCanMod.sendPacket(new TrashActionPayload(1, rawId, ItemStack.EMPTY));
 
                 InventoryScreen screen = (InventoryScreen) (Object) this;
                 int totalCount = carried.getCount();
@@ -77,11 +76,11 @@ public abstract class InventoryScreenMixin extends Screen {
             } else if (!carried.isEmpty()) {
                 InventoryTrashCanMod.lastTrashedItem = carried.copy();
                 mc.player.containerMenu.setCarried(ItemStack.EMPTY);
-                ClientPlayNetworking.send(new TrashActionPayload(0, 0, ItemStack.EMPTY));
+                InventoryTrashCanMod.sendPacket(new TrashActionPayload(0, 0, ItemStack.EMPTY));
             } else if (!InventoryTrashCanMod.lastTrashedItem.isEmpty()) {
                 ItemStack restored = InventoryTrashCanMod.lastTrashedItem.copy();
                 mc.player.containerMenu.setCarried(restored);
-                ClientPlayNetworking.send(new TrashActionPayload(2, 0, restored));
+                InventoryTrashCanMod.sendPacket(new TrashActionPayload(2, 0, restored));
                 InventoryTrashCanMod.lastTrashedItem = ItemStack.EMPTY;
             }
 
@@ -90,19 +89,19 @@ public abstract class InventoryScreenMixin extends Screen {
         this.addRenderableWidget(trashButton);
     }
 
-    @Inject(method = "extractRenderState(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V",
+    @Inject(method = "render(Lnet/minecraft/client/gui/GuiGraphics;IIF)V",
             at = @At("RETURN"))
-    private void afterRender(GuiGraphicsExtractor extractor, int mouseX, int mouseY,
+    private void afterRender(GuiGraphics guiGraphics, int mouseX, int mouseY,
                              float delta, CallbackInfo ci) {
         if (trashButton == null) return;
 
         if (!InventoryTrashCanMod.lastTrashedItem.isEmpty()) {
             ItemStack trashItem = InventoryTrashCanMod.lastTrashedItem;
-            extractor.item(trashItem, trashButton.getX(), trashButton.getY());
+            guiGraphics.renderItem(trashItem, trashButton.getX(), trashButton.getY());
             if (trashItem.getCount() > 1) {
                 String count = String.valueOf(trashItem.getCount());
                 Font font = Minecraft.getInstance().font;
-                extractor.text(font, count,
+                guiGraphics.drawString(font, count,
                         trashButton.getX() + 17 - font.width(count),
                         trashButton.getY() + 9, 0xFFFFFFFF);
             }
@@ -119,8 +118,8 @@ public abstract class InventoryScreenMixin extends Screen {
                 && mouseY >= trashButton.getY() && mouseY < trashButton.getY() + 16;
         if (!hovering) return;
 
-        boolean shiftDown = InputConstants.isKeyDown(client.getWindow(), GLFW.GLFW_KEY_LEFT_SHIFT)
-                || InputConstants.isKeyDown(client.getWindow(), GLFW.GLFW_KEY_RIGHT_SHIFT);
+        boolean shiftDown = InputConstants.isKeyDown(client.getWindow().getWindow(), GLFW.GLFW_KEY_LEFT_SHIFT)
+                || InputConstants.isKeyDown(client.getWindow().getWindow(), GLFW.GLFW_KEY_RIGHT_SHIFT);
         if (!shiftDown) return;
 
         InventoryScreen screen = (InventoryScreen) (Object) this;
@@ -130,7 +129,7 @@ public abstract class InventoryScreenMixin extends Screen {
                 AbstractContainerScreenAccessor acc = (AbstractContainerScreenAccessor) this;
                 int sx = acc.getLeftPos() + slot.x;
                 int sy = acc.getTopPos() + slot.y;
-                extractor.fill(sx, sy, sx + 16, sy + 16, 0x80FF0000);
+                guiGraphics.fill(sx, sy, sx + 16, sy + 16, 0x80FF0000);
             }
         }
     }

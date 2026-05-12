@@ -3,76 +3,95 @@ package com.cukkoo.inventorytrashcan;
 import com.cukkoo.inventorytrashcan.config.ModConfig;
 import com.cukkoo.inventorytrashcan.network.TrashActionPayload;
 import com.mojang.blaze3d.platform.InputConstants;
-import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.event.TickEvent;
+import net.neoforged.neoforge.eventbus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.loading.FMLPaths;
+import net.neoforged.neoforge.network.ChannelBuilder;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.lwjgl.glfw.GLFW;
 
-public class InventoryTrashCanMod implements ClientModInitializer {
+@Mod(InventoryTrashCanMod.MOD_ID)
+public class InventoryTrashCanMod {
 
     public static final String MOD_ID = "inventory_trash_can";
     public static ModConfig CONFIG;
-
     public static ItemStack lastTrashedItem = ItemStack.EMPTY;
 
     private static boolean deleteWasDown = false;
 
-    @Override
-    public void onInitializeClient() {
-        CONFIG = ModConfig.load();
+    public InventoryTrashCanMod() {
+        CONFIG = ModConfig.load(FMLPaths.CONFIGDIR.get());
 
-        PayloadTypeRegistry.serverboundPlay().register(TrashActionPayload.TYPE, TrashActionPayload.CODEC);
+        ChannelBuilder.named(ResourceLocation.fromNamespaceAndPath(MOD_ID, "trash"))
+                .networkProtocolVersion(1)
+                .payloadChannel()
+                .play()
+                .serverbound(flow -> flow.add(
+                        TrashActionPayload.TYPE,
+                        TrashActionPayload.CODEC,
+                        (payload, ctx) -> {
+                            ctx.enqueueWork(() -> {
+                                var player = ctx.getSender();
+                                if (player == null || player.containerMenu == null) return;
 
-        ServerPlayNetworking.registerGlobalReceiver(TrashActionPayload.TYPE, (payload, context) -> {
-            context.server().execute(() -> {
-                var player = context.player();
-                if (player == null || player.containerMenu == null) return;
-
-                switch (payload.action()) {
-                    case 0 -> player.containerMenu.setCarried(ItemStack.EMPTY);
-                    case 1 -> {
-                        player.containerMenu.setCarried(ItemStack.EMPTY);
-                        Item target = BuiltInRegistries.ITEM.byId(payload.rawItemId());
-                        for (Slot slot : player.containerMenu.slots) {
-                            if (slot.container instanceof Inventory
-                                    && slot.getItem().getItem() == target) {
-                                slot.set(ItemStack.EMPTY);
-                            }
+                                switch (payload.action()) {
+                                    case 0 -> player.containerMenu.setCarried(ItemStack.EMPTY);
+                                    case 1 -> {
+                                        player.containerMenu.setCarried(ItemStack.EMPTY);
+                                        Item target = BuiltInRegistries.ITEM.byId(payload.rawItemId());
+                                        for (Slot slot : player.containerMenu.slots) {
+                                            if (slot.container instanceof Inventory
+                                                    && slot.getItem().getItem() == target) {
+                                                slot.set(ItemStack.EMPTY);
+                                            }
+                                        }
+                                    }
+                                    case 2 -> player.containerMenu.setCarried(payload.restoreStack());
+                                }
+                            });
+                            ctx.setPacketHandled(true);
                         }
-                    }
-                    case 2 -> player.containerMenu.setCarried(payload.restoreStack());
-                }
-            });
-        });
+                ));
+    }
 
-        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+    public static void sendPacket(TrashActionPayload payload) {
+        PacketDistributor.SERVER.noArg().send(new ServerboundCustomPayloadPacket(payload));
+    }
+
+    @Mod.EventBusSubscriber(modid = MOD_ID, bus = Mod.EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
+    public static class ForgeEvents {
+        @SubscribeEvent
+        public static void onClientTick(TickEvent.ClientTickEvent.Post event) {
+            Minecraft client = Minecraft.getInstance();
             if (client.player == null) return;
 
-            boolean deleteDown = InputConstants.isKeyDown(client.getWindow(), GLFW.GLFW_KEY_DELETE);
+            boolean deleteDown = InputConstants.isKeyDown(client.getWindow().getWindow(), GLFW.GLFW_KEY_DELETE);
             boolean justPressed = deleteDown && !deleteWasDown;
             deleteWasDown = deleteDown;
 
             if (!justPressed) return;
             if (!(client.screen instanceof InventoryScreen)) return;
 
-            boolean shiftDown = InputConstants.isKeyDown(client.getWindow(), GLFW.GLFW_KEY_LEFT_SHIFT)
-                    || InputConstants.isKeyDown(client.getWindow(), GLFW.GLFW_KEY_RIGHT_SHIFT);
+            boolean shiftDown = InputConstants.isKeyDown(client.getWindow().getWindow(), GLFW.GLFW_KEY_LEFT_SHIFT)
+                    || InputConstants.isKeyDown(client.getWindow().getWindow(), GLFW.GLFW_KEY_RIGHT_SHIFT);
 
             if (shiftDown) {
                 ItemStack carried = client.player.containerMenu.getCarried();
                 if (carried.isEmpty()) return;
 
                 int rawId = BuiltInRegistries.ITEM.getId(carried.getItem());
-                ClientPlayNetworking.send(new TrashActionPayload(1, rawId, ItemStack.EMPTY));
+                sendPacket(new TrashActionPayload(1, rawId, ItemStack.EMPTY));
 
                 InventoryScreen screen = (InventoryScreen) client.screen;
                 int totalCount = carried.getCount();
@@ -92,14 +111,14 @@ public class InventoryTrashCanMod implements ClientModInitializer {
                 if (!carried.isEmpty()) {
                     lastTrashedItem = carried.copy();
                     client.player.containerMenu.setCarried(ItemStack.EMPTY);
-                    ClientPlayNetworking.send(new TrashActionPayload(0, 0, ItemStack.EMPTY));
+                    sendPacket(new TrashActionPayload(0, 0, ItemStack.EMPTY));
                 } else if (!lastTrashedItem.isEmpty()) {
                     ItemStack restored = lastTrashedItem.copy();
                     client.player.containerMenu.setCarried(restored);
-                    ClientPlayNetworking.send(new TrashActionPayload(2, 0, restored));
+                    sendPacket(new TrashActionPayload(2, 0, restored));
                     lastTrashedItem = ItemStack.EMPTY;
                 }
             }
-        });
+        }
     }
 }
