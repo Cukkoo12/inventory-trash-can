@@ -1,6 +1,14 @@
 # Inventory Trash Can
 
-A Minecraft Fabric mod that adds a trash can button to the inventory screen for quick and practical disposal of unwanted items.
+A Minecraft mod that adds a trash can button to the inventory screen for quick and practical disposal of unwanted items.
+
+## Supported Versions
+
+| Minecraft | Fabric | Forge | NeoForge |
+|-----------|--------|-------|----------|
+| 26.1.x | `main` / `v26.1.2` | `v26.1.2-forge` | `v26.1.2-neoforge` |
+| 1.21.4 | `v1.21.4-fabric` | — | `v1.21.4-neoforge` |
+| 1.20.1 | `v1.20.1-fabric` | `v1.20.1-forge` | — |
 
 ## Features
 
@@ -41,10 +49,11 @@ A Minecraft Fabric mod that adds a trash can button to the inventory screen for 
 
 ## Requirements
 
-- **Minecraft:** 26.1.x
-- **Fabric Loader:** >=0.18.5
-- **Fabric API:** >=0.145.4
-- **Java:** 25
+| Version | Java | Loader |
+|---------|------|--------|
+| 26.1.x | 25 | Fabric Loader >=0.18.5 / Forge / NeoForge |
+| 1.21.4 | 21 | Fabric Loader >=0.16.9 / NeoForge >=21.4 |
+| 1.20.1 | 17 | Fabric Loader >=0.16.9 / Forge >=47.3 |
 
 ## Installation
 
