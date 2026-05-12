@@ -1,42 +1,71 @@
 plugins {
-	id 'net.fabricmc.fabric-loom' version '1.15-SNAPSHOT'
-	id 'maven-publish'
+    id 'eclipse'
+    id 'idea'
+    id 'net.minecraftforge.gradle' version '[6.0.16,6.2)'
 }
 
 version = project.mod_version
 group = project.maven_group
 
 base {
-	archivesName = project.archives_base_name
+    archivesName = project.archives_base_name
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+
+minecraft {
+    mappings channel: 'official', version: project.minecraft_version
+
+    runs {
+        client {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            mods {
+                inventorytrashcan {
+                    source sourceSets.main
+                }
+            }
+        }
+        server {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            args '--nogui'
+            mods {
+                inventorytrashcan {
+                    source sourceSets.main
+                }
+            }
+        }
+    }
 }
 
 repositories {
-	mavenCentral()
+    mavenCentral()
 }
 
 dependencies {
-	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	// mappings YOK
-	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
-	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+    minecraft "net.minecraftforge:forge:${project.minecraft_version}-${project.forge_version}"
+    compileOnly 'org.spongepowered:mixin:0.8.5'
 }
 
 processResources {
-	inputs.property "version", project.version
-	filteringCharset = "UTF-8"
-	filesMatching("fabric.mod.json") {
-		expand "version": project.version
-	}
-}
-
-java {
-	sourceCompatibility = JavaVersion.VERSION_25
-	targetCompatibility = JavaVersion.VERSION_25
-	withSourcesJar()
+    inputs.property "version", project.version
+    filteringCharset = "UTF-8"
+    filesMatching("META-INF/mods.toml") {
+        expand "version": project.version
+    }
 }
 
 jar {
-	from("LICENSE") {
-		rename { "${it}_${project.archives_base_name}" }
-	}
+    manifest {
+        attributes([
+            "Specification-Title"     : project.archives_base_name,
+            "Specification-Version"   : "1",
+            "Implementation-Title"    : project.archives_base_name,
+            "Implementation-Version"  : project.version,
+            "MixinConfigs"            : "inventory_trash_can.mixins.json"
+        ])
+    }
 }
