@@ -5,14 +5,14 @@
 	"name": "Inventory Trash Can",
 	"description": "A mod that allows for the quick and practical disposal of unnecessary items directly from the Minecraft inventory.",
 	"authors": [
-		"Musa"
+		"Cukkoo"
 	],
 	"license": "MIT",
 	"icon": "assets/inventory_trash_can/icon.png",
 	"environment": "*",
 	"entrypoints": {
-		"main": [
-			"com.example.ExampleMod"
+		"client": [
+			"com.cukkoo.inventorytrashcan.InventoryTrashCanMod"
 		]
 	},
 	"mixins": [
